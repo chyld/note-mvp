@@ -1,0 +1,20 @@
+{
+  "name": "margin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild client/main.js --bundle --format=esm --minify --sourcemap --outfile=public/build/app.js",
+    "watch": "esbuild client/main.js --bundle --format=esm --sourcemap --outfile=public/build/app.js --watch",
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@codemirror/commands": "^6.8.0",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.36.0",
+    "esbuild": "^0.25.0"
+  }
+}

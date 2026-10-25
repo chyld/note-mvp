@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in · Margin</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="center-page">
+  <form id="login" class="card">
+    <h1><img src="/favicon.svg" alt=""> Margin</h1>
+    <label>Username <input name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required autofocus></label>
+    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+    <p id="error" class="error" hidden></p>
+    <button class="btn btn-primary" type="submit">Log in</button>
+  </form>
+  <script>
+    const form = document.getElementById('login');
+    const error = document.getElementById('error');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      error.hidden = true;
+      const body = Object.fromEntries(new FormData(form));
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) return location.reload(); // same URL, so note and tag links continue after login
+      error.textContent = (await res.json().catch(() => ({}))).error || 'Login failed';
+      error.hidden = false;
+    });
+  </script>
+</body>
+</html>

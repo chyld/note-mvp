@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Margin</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="sb-head">
+        <button id="sb-collapse" class="icon-btn" title="Collapse sidebar" aria-label="Collapse sidebar">
+          <svg viewBox="0 0 16 16"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="brand"><img src="/favicon.svg" alt=""> Margin</span>
+        <button id="new-note" class="btn btn-primary" title="New note">+ New note</button>
+      </div>
+      <div class="sb-filters">
+        <select id="tag-filter" aria-label="Filter by tag"></select>
+        <input id="search" type="search" placeholder="Search notes" autocomplete="off" spellcheck="false">
+      </div>
+      <div id="trash-head" class="trash-head" hidden>
+        <span>Trash</span>
+        <button id="empty-trash" class="btn btn-danger btn-small">Empty trash</button>
+      </div>
+      <ul id="note-list" class="note-list"></ul>
+      <div class="sb-foot">
+        <button id="trash-toggle" class="btn btn-ghost btn-small">Trash</button>
+        <span class="sb-user"><span id="username"></span> <button id="logout" class="btn btn-ghost btn-small">Log out</button></span>
+      </div>
+    </aside>
+
+    <main id="main">
+      <div id="menubar" class="menubar">
+        <button id="sb-expand" class="icon-btn" title="Show sidebar" aria-label="Show sidebar" hidden>
+          <svg viewBox="0 0 16 16"><path d="M2.5 4h11M2.5 8h11M2.5 12h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+        <div id="note-tools" class="note-tools" hidden>
+          <button id="save" class="btn save-btn" data-state="clean" title="Save (Ctrl+S)">Saved</button>
+          <div class="mode-toggle" role="group" aria-label="View mode">
+            <button data-mode="render" title="Render mode (Ctrl+E toggles)">Render</button>
+            <button data-mode="raw" title="Raw mode (Ctrl+E toggles)">Raw</button>
+          </div>
+          <div id="tags" class="tags">
+            <span id="tag-chips" class="tag-chips"></span>
+            <input id="tag-input" class="tag-input" placeholder="add tag" maxlength="40" autocomplete="off" spellcheck="false">
+          </div>
+          <span class="spacer"></span>
+          <button id="trash-note" class="btn btn-ghost" title="Move to trash">Trash</button>
+        </div>
+      </div>
+      <div id="trash-banner" class="trash-banner" hidden>
+        This note is in the trash.
+        <button id="restore-note" class="btn btn-small">Restore</button>
+        <button id="delete-note" class="btn btn-danger btn-small">Delete forever</button>
+      </div>
+      <div id="editor-wrap" class="editor-wrap" hidden>
+        <div id="editor"></div>
+      </div>
+      <div id="empty-state" class="empty-state">
+        <p>Select a note, or create a new one.</p>
+        <button id="new-note-2" class="btn btn-primary">+ New note</button>
+      </div>
+    </main>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+  <script type="module" src="/build/app.js"></script>
+</body>
+</html>

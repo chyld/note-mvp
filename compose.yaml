@@ -1,0 +1,12 @@
+services:
+  margin:
+    build: .
+    image: margin
+    container_name: margin
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./data:/data
+    # Run as your user so the files in ./data stay yours. Override with MARGIN_UID / MARGIN_GID.
+    user: "${MARGIN_UID:-1000}:${MARGIN_GID:-1000}"
