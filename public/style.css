@@ -9,8 +9,7 @@
   --violet: #7c5cff;
   --pink: #ff4fa0;
   --red: #e5484d;
-  --grad: linear-gradient(135deg, #7c5cff 0%, #c04dff 50%, #ff5fa2 100%);
-  --rainbow: linear-gradient(90deg, #ff7a8a, #ffb347, #ffd84d, #7cd590, #53d8b1, #4fcdff, #8f7bff, #eb9fe8);
+  --violet-dark: #6a48f0;
   --code-bg: #f6f5fb;
   --code-border: #e2ddf0;
   --shadow-sm: 0 1px 2px rgb(60 40 140 / 0.06), 0 2px 8px rgb(60 40 140 / 0.05);
@@ -58,11 +57,11 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
 .btn svg { width: 16px; height: 16px; }
 .btn-primary {
   border: 0;
-  background: var(--grad);
+  background: var(--violet);
   color: #fff;
-  box-shadow: 0 6px 18px rgb(150 80 255 / 0.32);
+  box-shadow: 0 6px 16px rgb(124 92 255 / 0.3);
 }
-.btn-primary:hover { background: var(--grad); filter: brightness(1.06) saturate(1.05); box-shadow: 0 8px 22px rgb(150 80 255 / 0.42); }
+.btn-primary:hover { background: var(--violet-dark); box-shadow: 0 8px 20px rgb(124 92 255 / 0.38); }
 .btn-primary svg { stroke-width: 2.4; }
 .btn-block { display: flex; width: calc(100% - 24px); margin: 2px 12px 12px; padding: 10px 14px; border-radius: 12px; }
 .btn-danger { color: var(--red); border-color: #ffd0d5; background: #fff; }
@@ -128,10 +127,7 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   font-size: 19px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(90deg, #7c5cff, #d14dff 55%, #ff7a59);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--violet);
 }
 
 .sb-filters {
@@ -319,12 +315,12 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
 .save-btn[data-state="clean"]:hover { background: #d6f3e3; color: #157a46; }
 .save-btn[data-state="dirty"] {
   color: #fff;
-  background: linear-gradient(135deg, #ffb347, #ff6f61);
-  box-shadow: 0 4px 12px rgb(255 120 80 / 0.4);
+  background: #ff7a45;
+  box-shadow: 0 4px 12px rgb(255 122 69 / 0.38);
 }
 .save-btn[data-state="dirty"]:hover { color: #fff; filter: brightness(1.05); }
-.save-btn[data-state="saving"] { color: #fff; background: linear-gradient(135deg, #4fcdff, #7c5cff); animation: pulse 0.9s ease-in-out infinite; }
-.save-btn[data-state="error"] { color: #fff; background: linear-gradient(135deg, #ff5d6c, #e5484d); box-shadow: 0 4px 12px rgb(229 72 77 / 0.4); }
+.save-btn[data-state="saving"] { color: #fff; background: #4f8bff; animation: pulse 0.9s ease-in-out infinite; }
+.save-btn[data-state="error"] { color: #fff; background: var(--red); box-shadow: 0 4px 12px rgb(229 72 77 / 0.4); }
 .save-dot {
   position: absolute;
   top: 4px;
@@ -369,16 +365,16 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: var(--grad);
-  box-shadow: 0 3px 10px rgb(150 80 255 / 0.4);
+  background: var(--violet);
+  box-shadow: 0 3px 10px rgb(124 92 255 / 0.38);
   transition: transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1), background 0.25s;
 }
 .mode-switch[data-mode="render"] .ms-render,
 .mode-switch[data-mode="raw"] .ms-raw { color: #fff; }
 .mode-switch[data-mode="raw"] .ms-thumb {
   transform: translateX(34px);
-  background: linear-gradient(135deg, #22c3b5, #3f8cff);
-  box-shadow: 0 3px 10px rgb(40 150 220 / 0.4);
+  background: #1fb5a8;
+  box-shadow: 0 3px 10px rgb(31 181 168 / 0.38);
 }
 .mode-switch:hover { background: #ebe6fb; }
 
@@ -394,13 +390,13 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
 }
 .fs-mono { font-family: var(--mono-font); letter-spacing: -0.04em; }
 .fs-prop { font-family: var(--prose-font); }
-.font-switch .ms-thumb { background: linear-gradient(135deg, #ffb347, #ff6f61); box-shadow: 0 3px 10px rgb(255 120 80 / 0.4); }
+.font-switch .ms-thumb { background: #ff7a45; box-shadow: 0 3px 10px rgb(255 122 69 / 0.38); }
 .font-switch[data-font="mono"] .fs-mono,
 .font-switch[data-font="prop"] .fs-prop { color: #fff; }
 .font-switch[data-font="prop"] .ms-thumb {
   transform: translateX(34px);
-  background: linear-gradient(135deg, #7cd590, #22c3b5);
-  box-shadow: 0 3px 10px rgb(40 180 150 / 0.4);
+  background: #2fb874;
+  box-shadow: 0 3px 10px rgb(47 184 116 / 0.38);
 }
 .font-switch:disabled { opacity: 0.4; cursor: default; }
 .font-switch:disabled:hover { background: #f1eefc; }
@@ -538,10 +534,7 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   margin: 0;
   font-size: 26px;
   letter-spacing: -0.02em;
-  background: linear-gradient(90deg, #7c5cff, #d14dff 50%, #ff7a59);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--violet);
 }
 .empty-state p { position: relative; margin: 0 0 14px; color: var(--muted); }
 .empty-state .btn { position: relative; }
@@ -579,13 +572,6 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   background: #fff;
   box-shadow: 0 10px 40px rgb(60 40 140 / 0.08), 0 1px 3px rgb(60 40 140 / 0.06);
   overflow: clip;
-}
-.paper::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 5px;
-  background: var(--rainbow);
 }
 #editor { padding: 44px 56px 56px; }
 
@@ -651,7 +637,7 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   padding: 2px 10px;
   border: 0;
   border-radius: 7px;
-  background: var(--grad);
+  background: var(--violet);
   color: #fff;
   font: 600 11.5px/1.6 var(--ui-font);
   cursor: pointer;
@@ -661,7 +647,7 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   transition: opacity 0.15s;
 }
 #editor .cm-copy.show { opacity: 1; pointer-events: auto; }
-#editor .cm-copy:hover { filter: brightness(1.08); }
+#editor .cm-copy:hover { background: var(--violet-dark); }
 #editor .mode-raw .cm-copy { display: none; }
 
 /* Sections */
@@ -740,20 +726,12 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   position: fixed;
   z-index: 50;
   width: 392px;
-  padding: 14px 12px 12px;
+  padding: 12px;
   border-radius: 16px;
   background: #fff;
   box-shadow: var(--shadow-lg);
   font-family: var(--ui-font);
   user-select: none;
-}
-.format-popup::before {
-  content: "";
-  position: absolute;
-  inset: 0 18px auto;
-  height: 3px;
-  border-radius: 0 0 3px 3px;
-  background: var(--rainbow);
 }
 .fp-row { display: flex; gap: 6px; margin-bottom: 6px; }
 .fp-btn {
@@ -769,7 +747,7 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 .fp-btn:hover { background: #f4f1ff; border-color: #d9d0fb; }
-.fp-btn.active { border-color: transparent; background: var(--grad); color: #fff; box-shadow: 0 3px 10px rgb(150 80 255 / 0.3); }
+.fp-btn.active { border-color: transparent; background: var(--violet); color: #fff; box-shadow: 0 3px 10px rgb(124 92 255 / 0.28); }
 .fp-code { font-family: var(--mono-font); font-size: 12px; }
 .fp-wide { flex: 1; }
 .fp-grid {
@@ -820,10 +798,10 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   height: 8px;
   margin-right: 10px;
   border-radius: 50%;
-  background: var(--grad);
+  background: #b9a6ff;
   vertical-align: 1px;
 }
-.toast[data-kind="error"] { background: linear-gradient(135deg, #ff5d6c, #e5484d); }
+.toast[data-kind="error"] { background: var(--red); }
 .toast[data-kind="error"]::before { background: #fff; }
 
 /* ---------- Login / 404 ---------- */
@@ -851,20 +829,10 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
-.card::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 5px;
-  background: var(--rainbow);
-}
 .card h1 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 26px; letter-spacing: -0.02em; }
 .card h1 img { width: 34px; height: 34px; filter: drop-shadow(0 4px 8px rgb(124 92 255 / 0.35)); }
 .card h1 span {
-  background: linear-gradient(90deg, #7c5cff, #d14dff 55%, #ff7a59);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--violet);
 }
 .card label { display: grid; gap: 5px; color: var(--muted); font-size: 12.5px; font-weight: 600; }
 .card input {
@@ -888,8 +856,5 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 1;
-  background: linear-gradient(90deg, #ff7a8a, #ffb347, #8f7bff, #4fcdff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent !important;
+  color: var(--violet) !important;
 }
