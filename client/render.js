@@ -167,18 +167,21 @@ function buildRender(state) {
     hidden.push({ from, to, kind });
   };
 
-  const inline = (text, offset) => {
+  // In a heading, highlights keep bold and underline but not their color: the heading
+  // always shows its section's color.
+  const inline = (text, offset, inHeading = false) => {
     for (const t of parseInline(text, offset)) {
       tokens.push(t);
       markers.push({ from: t.from, to: t.to, ranges: [[t.from, t.contentFrom], [t.contentTo, t.to]] });
       hideRange(t.from, t.contentFrom, 'marker');
       hideRange(t.contentTo, t.to, 'marker');
       if (t.type === 'hl') {
+        const color = inHeading ? null : t.opts.color;
         const cls = ['cm-hl'];
-        if (t.opts.color) cls.push('cm-hl-color');
+        if (color) cls.push('cm-hl-color');
         if (t.opts.b) cls.push('cm-hl-b');
         if (t.opts.u) cls.push('cm-hl-u');
-        const attributes = t.opts.color ? { style: `--hl:${COLORS[t.opts.color]}` } : undefined;
+        const attributes = color ? { style: `--hl:${COLORS[color]}` } : undefined;
         decos.push(Decoration.mark({ class: cls.join(' '), attributes }).range(t.contentFrom, t.contentTo));
       } else {
         decos.push(Decoration.mark({ class: 'cm-code' }).range(t.contentFrom, t.contentTo));
@@ -215,7 +218,7 @@ function buildRender(state) {
         markers.push({ from: line.from, to: line.to, ranges: [[line.from, line.from + line.prefixLen]] });
         hideRange(line.from, line.from + line.prefixLen, 'heading',
           Decoration.replace({ widget: new FoldWidget(line.text, isCollapsed) }));
-        inline(line.text.slice(line.prefixLen), line.from + line.prefixLen);
+        inline(line.text.slice(line.prefixLen), line.from + line.prefixLen, true);
         break;
       }
       case 'fence-open':

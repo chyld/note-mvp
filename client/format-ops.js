@@ -92,8 +92,10 @@ export function formatState(state) {
       result.b &&= c.opts.b;
       result.u &&= c.opts.u;
       result.code &&= c.code;
-      if (result.color === undefined) result.color = c.opts.color;
-      else if (result.color !== c.opts.color) result.color = null;
+      // A heading's color is always its section's color.
+      const color = line.kind === 'heading' ? line.color : c.opts.color;
+      if (result.color === undefined) result.color = color;
+      else if (result.color !== color) result.color = null;
     }
   }
   if (!result.any) Object.assign(result, { b: false, u: false, code: result.inCodeBlock, color: null });
@@ -103,7 +105,8 @@ export function formatState(state) {
 
 // Applies an inline change to every selected character. `op` is one of:
 // { type: 'b' }, { type: 'u' }, { type: 'color', color }, { type: 'removeColor' }, { type: 'clear' }
-// Code and Section work on whole lines and have their own functions.
+// Code and Section work on whole lines and have their own functions. A color picked on a
+// section heading recolors the section (heading and bar) instead of highlighting its text.
 export function applyFormat(state, op) {
   const sel = state.selection.main;
   if (sel.empty) return null;
@@ -131,9 +134,17 @@ export function applyFormat(state, op) {
     const region = inlineRegion(line);
     if (!region) continue;
     const chars = lineModel(region.text, region.start);
+    const recolorSection = line.kind === 'heading' && op.type === 'color';
     let firstIdx = -1;
     let lastIdx = -1;
     const next = chars.map((c, i) => {
+      if (recolorSection) {
+        if (c.pos >= sel.from && c.pos < sel.to) {
+          if (firstIdx < 0) firstIdx = i;
+          lastIdx = i;
+        }
+        return c.opts.color ? { ...c, opts: { ...c.opts, color: null } } : c;
+      }
       if (c.pos < sel.from || c.pos >= sel.to) return c;
       if (firstIdx < 0) firstIdx = i;
       lastIdx = i;
@@ -141,9 +152,13 @@ export function applyFormat(state, op) {
     });
     if (firstIdx < 0) continue;
     const out = serialize(next);
-    if (out.text !== region.text) changes.push({ from: region.start, to: line.to, insert: out.text });
-    if (!first) first = { start: region.start, offset: out.pos[firstIdx] };
-    last = { start: region.start, offset: out.pos[lastIdx] + 1 };
+    // Replace from the line start when the heading's color changes, else just the text.
+    const start = recolorSection ? line.from : region.start;
+    const prefix = recolorSection ? `## {${op.color}} ` : '';
+    const insert = prefix + out.text;
+    if (insert !== state.sliceDoc(start, line.to)) changes.push({ from: start, to: line.to, insert });
+    if (!first) first = { start, offset: prefix.length + out.pos[firstIdx] };
+    last = { start, offset: prefix.length + out.pos[lastIdx] + 1 };
   }
   if (!changes.length) return null;
   const cs = state.changes(changes);

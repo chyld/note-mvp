@@ -131,7 +131,9 @@ only applies when the syntax is exactly right, so a stray `==` stays plain text.
 **Sections** start at a `## {color} Heading` line and run to the next section heading or the
 end of the note. In render mode, click the ⌄ to collapse or expand one. Collapsed sections
 are remembered in your browser. **Section** in the popup turns the selected line into a
-`## {blue-deep}` heading (edit the color in raw mode), or a heading back into a plain line.
+`## {blue-deep}` heading, or a heading back into a plain line. To change a section's color,
+select text in its heading and pick a color: the heading and its bar always share the section's
+color, so highlight colors inside a heading aren't shown (bold and underline still are).
 
 ## Development
 
