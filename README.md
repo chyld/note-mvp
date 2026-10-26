@@ -86,8 +86,10 @@ Logins last 30 days and are renewed while you use Margin. **Log out** ends a ses
 - **Formatting**: select text and a popup appears: **B**, **U**, **</>** (code),
   **Section**, **Clear formatting**, **Remove color**, and 24 highlight colors. Click an
   option, or use the arrow keys and **Enter**. **Esc** closes the popup.
-- **Tags**: add tags in the bar above the note (lowercase a-z and 0-9). Tags save immediately.
-  The dropdown at the top of the sidebar filters notes by tag.
+- **Tags**: add tags in the bar above the note (lowercase a-z and 0-9). As you type, your
+  existing tags are suggested (each user has their own tags: the ones their notes use).
+  **Enter** takes the highlighted suggestion; the arrow keys move between them. Tags save
+  immediately. The dropdown at the top of the sidebar filters notes by tag.
 - **Search**: the search box matches the text of your notes and works together with the tag
   filter.
 - **Screenshots**: paste a PNG screenshot into a note. Only PNGs are accepted, with no size

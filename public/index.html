@@ -45,7 +45,10 @@
           </div>
           <div id="tags" class="tags">
             <span id="tag-chips" class="tag-chips"></span>
-            <input id="tag-input" class="tag-input" placeholder="add tag" maxlength="40" autocomplete="off" spellcheck="false">
+            <span class="tag-input-wrap">
+              <input id="tag-input" class="tag-input" placeholder="add tag" maxlength="40" autocomplete="off" spellcheck="false">
+              <ul id="tag-suggest" class="tag-suggest" hidden></ul>
+            </span>
           </div>
           <span class="spacer"></span>
           <button id="trash-note" class="btn btn-ghost" title="Move to trash">Trash</button>

@@ -12,6 +12,7 @@ const els = {
   save: $('save'),
   tagChips: $('tag-chips'),
   tagInput: $('tag-input'),
+  tagSuggest: $('tag-suggest'),
   trashBanner: $('trash-banner'),
   editorWrap: $('editor-wrap'),
   emptyState: $('empty-state'),
@@ -272,6 +273,7 @@ async function setTags(tags) {
   const previous = note.tags;
   note.tags = tags;
   renderTagChips();
+  updateSuggestions();
   try {
     await api('PUT', `/api/notes/${note.id}/tags`, { tags });
     await Promise.all([refreshList(), refreshTags()]);
@@ -280,6 +282,7 @@ async function setTags(tags) {
     renderTagChips();
     fail(err);
   }
+  updateSuggestions();
 }
 
 function renderTagChips() {
@@ -300,10 +303,69 @@ function renderTagChips() {
   }));
 }
 
-function addTagFromInput() {
-  const t = cleanTag(els.tagInput.value);
+function addTag(tag) {
   els.tagInput.value = '';
-  if (t && state.note && !state.note.tags.includes(t)) setTags([...state.note.tags, t]);
+  if (tag && state.note && !state.note.tags.includes(tag)) setTags([...state.note.tags, tag]);
+  else updateSuggestions();
+}
+
+function addTagFromInput() {
+  addTag(cleanTag(els.tagInput.value));
+}
+
+// Suggestions while adding a tag: the user's existing tags (from their notes), best match
+// first, plus an "Add new tag" entry when what's typed isn't a tag yet.
+let suggestions = [];
+let suggestIndex = -1;
+
+function updateSuggestions() {
+  if (document.activeElement !== els.tagInput || !state.note) {
+    suggestions = [];
+  } else {
+    const q = els.tagInput.value;
+    const have = new Set(state.note.tags);
+    suggestions = state.tags
+      .filter((t) => !have.has(t.tag) && t.tag.includes(q))
+      .sort((a, b) => (b.tag.startsWith(q) - a.tag.startsWith(q)) || b.count - a.count || a.tag.localeCompare(b.tag))
+      .slice(0, 8);
+    if (q && !have.has(q) && !state.tags.some((t) => t.tag === q)) suggestions.push({ tag: q, isNew: true });
+  }
+  // With something typed, Enter takes the best match; with nothing typed, nothing is picked yet.
+  suggestIndex = els.tagInput.value && suggestions.length ? 0 : -1;
+  renderSuggestions();
+}
+
+function renderSuggestions() {
+  els.tagSuggest.hidden = !suggestions.length;
+  els.tagSuggest.replaceChildren(...suggestions.map((s, i) => {
+    const li = document.createElement('li');
+    li.className = i === suggestIndex ? 'active' : '';
+    if (s.isNew) {
+      const label = document.createElement('span');
+      label.className = 'new';
+      label.append('Add new tag ', Object.assign(document.createElement('b'), { textContent: s.tag }));
+      li.append(label);
+    } else {
+      const name = document.createElement('span');
+      name.textContent = s.tag;
+      const count = document.createElement('span');
+      count.className = 'count';
+      count.textContent = s.count;
+      li.append(name, count);
+    }
+    li.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      addTag(s.tag);
+    });
+    li.addEventListener('mousemove', () => {
+      if (suggestIndex !== i) {
+        suggestIndex = i;
+        renderSuggestions();
+      }
+    });
+    return li;
+  }));
+  els.tagSuggest.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
 }
 
 async function refreshTags() {
@@ -463,19 +525,36 @@ els.tagInput.addEventListener('input', () => {
   }
   const clean = cleanTag(v);
   if (clean !== v) els.tagInput.value = clean;
+  updateSuggestions();
 });
 els.tagInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && suggestions.length) {
     e.preventDefault();
-    addTagFromInput();
+    const step = e.key === 'ArrowDown' ? 1 : -1;
+    suggestIndex = suggestIndex < 0 && step < 0 ? suggestions.length - 1 : (suggestIndex + step + suggestions.length) % suggestions.length;
+    renderSuggestions();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (suggestIndex >= 0) addTag(suggestions[suggestIndex].tag);
+    else addTagFromInput();
   } else if (e.key === 'Backspace' && !els.tagInput.value && state.note?.tags.length) {
     setTags(state.note.tags.slice(0, -1));
   } else if (e.key === 'Escape') {
+    if (suggestions.length && els.tagInput.value === '') {
+      suggestions = [];
+      renderSuggestions();
+      return;
+    }
     els.tagInput.value = '';
     editor.focus();
   }
 });
-els.tagInput.addEventListener('blur', addTagFromInput);
+els.tagInput.addEventListener('focus', updateSuggestions);
+els.tagInput.addEventListener('blur', () => {
+  addTagFromInput();
+  suggestions = [];
+  renderSuggestions();
+});
 
 $('logout').addEventListener('click', async () => {
   if (!confirmDiscard()) return;

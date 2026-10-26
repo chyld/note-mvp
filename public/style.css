@@ -257,6 +257,38 @@ button, input, select { font: inherit; color: inherit; }
 }
 .tag-input:focus { outline: none; border-style: solid; border-color: var(--accent); }
 .tag-input:disabled { display: none; }
+.tag-input-wrap { position: relative; display: inline-flex; }
+.tag-input-wrap:has(.tag-input:disabled) { display: none; }
+.tag-suggest {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  min-width: 170px;
+  max-height: 280px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(20 24 32 / 0.14);
+}
+.tag-suggest li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 12.5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tag-suggest li.active { background: #e8eefb; }
+.tag-suggest .count { color: var(--muted); }
+.tag-suggest .new { color: var(--muted); }
+.tag-suggest .new b { color: var(--text); font-weight: 600; }
 
 .trash-banner {
   display: flex;
