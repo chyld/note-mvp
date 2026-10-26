@@ -1,4 +1,6 @@
 import { createEditor } from './editor.js';
+import { HUES } from '../shared/format.js';
+import { darkShade } from './colors.js';
 
 const $ = (id) => document.getElementById(id);
 const els = {
@@ -65,6 +67,22 @@ function toast(msg, kind = 'info') {
 
 const fail = (err) => toast(err.message || String(err), 'error');
 
+// Every tag (and user) gets its own color, picked from the 12 highlight hues by its name.
+function hueFor(name) {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const [, light, deep] = HUES[h % HUES.length];
+  return { light, deep, dark: darkShade(deep) };
+}
+
+function colorize(el, name) {
+  const c = hueFor(name);
+  el.style.setProperty('--tag-light', c.light);
+  el.style.setProperty('--tag-deep', c.deep);
+  el.style.setProperty('--tag-dark', c.dark);
+  return el;
+}
+
 const formatDate = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '');
 
 function isDirty() {
@@ -116,16 +134,23 @@ editor.setMode(state.mode);
 function updateSaveButton() {
   if (state.saveState !== 'saving') state.saveState = isDirty() ? 'dirty' : state.saveState === 'error' ? 'error' : 'clean';
   if (state.saveState === 'error' && !isDirty()) state.saveState = 'clean';
-  const labels = { clean: 'Saved', dirty: 'Save', saving: 'Saving…', error: 'Save failed · Retry' };
+  const labels = {
+    clean: 'Saved (Ctrl+S)',
+    dirty: 'Unsaved changes · click to save (Ctrl+S)',
+    saving: 'Saving…',
+    error: 'Save failed · click to retry',
+  };
   els.save.dataset.state = state.saveState;
-  els.save.textContent = labels[state.saveState];
+  els.save.title = labels[state.saveState];
 }
 
 function setMode(mode) {
   state.mode = mode;
   localStorage.setItem('margin:mode', mode);
   editor.setMode(mode);
-  for (const b of document.querySelectorAll('.mode-toggle button')) b.classList.toggle('active', b.dataset.mode === mode);
+  const toggle = $('mode-toggle');
+  toggle.dataset.mode = mode;
+  toggle.title = mode === 'render' ? 'Render mode · click for raw (Ctrl+E)' : 'Raw mode · click for render (Ctrl+E)';
 }
 
 // ---------- Notes ----------
@@ -175,6 +200,7 @@ function showNote(note) {
   els.trashBanner.hidden = !note.trashedAt;
   $('trash-note').hidden = Boolean(note.trashedAt);
   els.save.hidden = Boolean(note.trashedAt);
+  $('format-btn').hidden = Boolean(note.trashedAt);
   els.tagInput.disabled = Boolean(note.trashedAt);
   renderTagChips();
   updateSaveButton();
@@ -287,7 +313,7 @@ async function setTags(tags) {
 
 function renderTagChips() {
   els.tagChips.replaceChildren(...(state.note?.tags || []).map((t) => {
-    const chip = document.createElement('span');
+    const chip = colorize(document.createElement('span'), t);
     chip.className = 'tag-chip';
     chip.textContent = t;
     if (!state.note.trashedAt) {
@@ -346,7 +372,8 @@ function renderSuggestions() {
       label.append('Add new tag ', Object.assign(document.createElement('b'), { textContent: s.tag }));
       li.append(label);
     } else {
-      const name = document.createElement('span');
+      const name = colorize(document.createElement('span'), s.tag);
+      name.className = 'sg-name';
       name.textContent = s.tag;
       const count = document.createElement('span');
       count.className = 'count';
@@ -410,6 +437,8 @@ function renderList() {
   const items = state.notes.map((n) => {
     const li = document.createElement('li');
     li.className = 'note-item' + (state.note?.id === n.id ? ' active' : '');
+    if (n.tags.length) colorize(li, n.tags[0]);
+    else li.classList.add('no-tags');
     li.dataset.id = n.id;
     const title = document.createElement('div');
     title.className = 'note-title' + (n.title ? '' : ' untitled');
@@ -422,7 +451,7 @@ function renderList() {
       const tags = document.createElement('div');
       tags.className = 'note-tags';
       for (const t of n.tags) {
-        const s = document.createElement('span');
+        const s = colorize(document.createElement('span'), t);
         s.className = 'tag-chip small';
         s.textContent = t;
         tags.appendChild(s);
@@ -446,7 +475,9 @@ function setTrashView(on) {
   els.app.classList.toggle('trash-view', on);
   els.trashHead.hidden = !on;
   els.tagFilter.disabled = on;
-  els.trashToggle.textContent = on ? '← Back to notes' : 'Trash';
+  els.trashToggle.innerHTML = on
+    ? '<svg><use href="#i-back"/></svg> <span>Back to notes</span>'
+    : '<svg><use href="#i-trash"/></svg> <span>Trash</span>';
 }
 
 // Home: all notes, nothing open, no filters.
@@ -485,9 +516,11 @@ $('home').addEventListener('click', (e) => {
 });
 $('sb-expand').addEventListener('click', () => setSidebar(false));
 
-for (const b of document.querySelectorAll('.mode-toggle button')) {
-  b.addEventListener('click', () => setMode(b.dataset.mode));
-}
+$('mode-toggle').addEventListener('click', () => setMode(state.mode === 'render' ? 'raw' : 'render'));
+
+const formatBtn = $('format-btn');
+formatBtn.addEventListener('mousedown', (e) => e.preventDefault()); // keep the editor's selection
+formatBtn.addEventListener('click', () => editor.toggleFormatBar(formatBtn));
 
 els.noteList.addEventListener('click', (e) => {
   const li = e.target.closest('.note-item');
@@ -591,6 +624,8 @@ async function start() {
   try {
     state.user = (await api('GET', '/api/session')).user;
     $('username').textContent = state.user;
+    const avatar = colorize($('avatar'), state.user);
+    avatar.textContent = state.user.slice(0, 1).toUpperCase();
   } catch (err) {
     return fail(err);
   }

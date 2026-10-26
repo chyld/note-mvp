@@ -49,6 +49,7 @@ export function createEditor(opts) {
     parent: opts.parent,
     state: EditorState.create({ doc: '', extensions: extensions('', []) }),
   });
+  popup.attach(view);
 
   function handlePaste(e, v) {
     const files = [...(e.clipboardData?.items || [])].filter((i) => i.kind === 'file').map((i) => i.getAsFile()).filter(Boolean);
@@ -120,6 +121,7 @@ export function createEditor(opts) {
       popup.hide();
       view.dispatch({ effects: editableComp.reconfigure(editableExt()) });
     },
+    toggleFormatBar: (button) => popup.toggle(button),
     text: () => view.state.doc.toString(),
     focus: () => view.focus(),
   };

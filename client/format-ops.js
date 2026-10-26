@@ -109,9 +109,9 @@ export function formatState(state) {
 // section heading recolors the section (heading and bar) instead of highlighting its text.
 export function applyFormat(state, op) {
   const sel = state.selection.main;
+  if (op.type === 'section') return toggleSection(state);
   if (sel.empty) return null;
   if (op.type === 'code') return toggleCode(state);
-  if (op.type === 'section') return toggleSection(state);
   const now = formatState(state);
   const parsed = parseDoc(state.doc.toString());
 

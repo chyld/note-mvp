@@ -77,15 +77,18 @@ Logins last 30 days and are renewed while you use Margin. **Log out** ends a ses
 
 - **Notes**: a note's first line is its title. **+ New note** creates one (it gets the tag
   you're filtering by, if any). Empty notes are fine.
-- **Saving**: notes are saved only when you press **Save** or **Ctrl+S**. The Save button is
-  green when saved, amber when there are unsaved changes, and red if saving failed. The browser
+- **Saving**: notes are saved only when you click the save icon or press **Ctrl+S**. The icon
+  is green when saved, orange with a dot when there are unsaved changes, and red if saving
+  failed. The browser
   warns you before unsaved changes would be lost. If a note is open in two tabs, the last save
   wins.
-- **Render / Raw**: Render mode shows the formatting; Raw mode shows the syntax. You can edit
-  in both. **Ctrl+E** switches between them.
+- **Render / Raw**: Render mode (eye) shows the formatting; Raw mode (code) shows the syntax.
+  You can edit in both. Click the toggle or press **Ctrl+E** to switch.
 - **Formatting**: select text and a popup appears: **B**, **U**, **</>** (code),
   **Section**, **Clear formatting**, **Remove color**, and 24 highlight colors. Click an
-  option, or use the arrow keys and **Enter**. **Esc** closes the popup.
+  option, or use the arrow keys and **Enter**. **Esc** closes the popup. The palette button in
+  the menu bar opens the same options as a bar that stays open while you edit; with nothing
+  selected, it formats the word at the cursor.
 - **Tags**: add tags in the bar above the note (lowercase a-z and 0-9). As you type, your
   existing tags are suggested (each user has their own tags: the ones their notes use).
   **Enter** takes the highlighted suggestion; the arrow keys move between them. Tags save
@@ -94,7 +97,7 @@ Logins last 30 days and are renewed while you use Margin. **Log out** ends a ses
   filter.
 - **Screenshots**: paste a PNG screenshot into a note. Only PNGs are accepted, with no size
   limit. Screenshots are kept even if you remove them from the note.
-- **Trash**: **Trash** moves a note to the trash. Open the trash from the bottom of the
+- **Trash**: the trash can icon moves a note to the trash. Open the trash from the bottom of the
   sidebar to restore notes or delete them forever. Nothing is deleted until you do.
 - **Links**: the address bar always links to what you're looking at:
   `http://<host>:5555/?note=k3x9q2mf` for a note or `http://<host>:5555/?tag=work` for a tag.

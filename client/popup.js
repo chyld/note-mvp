@@ -1,4 +1,5 @@
-// The formatting popup that appears next to a text selection.
+// The formatting popup. It appears next to a text selection, or opens from the menu bar's
+// formatting button, where it stays open ("pinned") while you edit.
 import { Prec } from '@codemirror/state';
 import { keymap, EditorView } from '@codemirror/view';
 import { HUES, COLORS } from '../shared/format.js';
@@ -27,6 +28,7 @@ export function createPopup() {
     </div>
     <div class="fp-hint">Enter applies · Esc closes</div>`;
   document.body.appendChild(el);
+  const hint = el.querySelector('.fp-hint');
 
   const rows = [
     [...el.querySelectorAll('.fp-row')[0].children],
@@ -36,17 +38,26 @@ export function createPopup() {
   ];
 
   let view = null;
+  let pinnedTo = null; // the menu bar button the popup was opened from
   let pointerDown = false;
   let dismissedFor = null; // the selection Esc was pressed on
   let focus = null; // [row, col] of the keyboard-highlighted item
   let raf = 0;
+  let hintTimer = 0;
 
   const visible = () => !el.hidden;
+  // Keys go to the popup unless it's pinned with no selection, when you're just typing.
+  const ownsKeys = () => visible() && !(pinnedTo && view.state.selection.main.empty);
 
   function hide() {
     el.hidden = true;
     focus = null;
     paintFocus();
+    if (pinnedTo) {
+      pinnedTo.classList.remove('active');
+      pinnedTo = null;
+      el.classList.remove('pinned');
+    }
   }
 
   function selectionKey(state) {
@@ -59,14 +70,7 @@ export function createPopup() {
     raf = requestAnimationFrame(update);
   }
 
-  function update() {
-    if (!view) return hide();
-    const { state } = view;
-    const sel = state.selection.main;
-    if (sel.empty || pointerDown || !view.hasFocus || state.readOnly || dismissedFor === selectionKey(state)) {
-      return hide();
-    }
-    dismissedFor = null;
+  function paintState(state) {
     const fs = formatState(state);
     el.querySelector('.fp-b').classList.toggle('active', fs.b);
     el.querySelector('.fp-u').classList.toggle('active', fs.u);
@@ -74,7 +78,31 @@ export function createPopup() {
     el.querySelector('.fp-section').classList.toggle('active', fs.section);
     el.classList.toggle('in-code', fs.inCodeBlock);
     for (const sw of el.querySelectorAll('.fp-swatch')) sw.classList.toggle('active', sw.dataset.color === fs.color);
+  }
 
+  function place(top, left) {
+    const w = el.offsetWidth;
+    el.style.top = `${top}px`;
+    el.style.left = `${Math.max(8, Math.min(left, window.innerWidth - w - 8))}px`;
+  }
+
+  function update() {
+    if (!view || view.state.readOnly) return hide();
+    const { state } = view;
+    const sel = state.selection.main;
+
+    if (pinnedTo) {
+      paintState(state);
+      el.hidden = false;
+      paintFocus();
+      const r = pinnedTo.getBoundingClientRect();
+      place(r.bottom + 8, r.left);
+      return;
+    }
+
+    if (sel.empty || pointerDown || !view.hasFocus || dismissedFor === selectionKey(state)) return hide();
+    dismissedFor = null;
+    paintState(state);
     const start = view.coordsAtPos(sel.from, 1);
     const end = view.coordsAtPos(sel.to, -1);
     if (!start || !end) return hide();
@@ -82,23 +110,44 @@ export function createPopup() {
     el.hidden = false;
     if (wasHidden) focus = null;
     paintFocus();
-    const w = el.offsetWidth;
     const h = el.offsetHeight;
     const gap = 8;
     let top = end.bottom + gap;
     if (top + h > window.innerHeight - 4) top = Math.max(4, start.top - h - gap);
-    let left = (sel.head === sel.from ? start.left : end.left) - w / 2;
-    left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
-    el.style.top = `${top}px`;
-    el.style.left = `${left}px`;
+    place(top, (sel.head === sel.from ? start.left : end.left) - el.offsetWidth / 2);
+  }
+
+  function flashHint(text) {
+    clearTimeout(hintTimer);
+    hint.textContent = text;
+    hint.classList.add('warn');
+    hintTimer = setTimeout(() => {
+      hint.textContent = 'Enter applies · Esc closes';
+      hint.classList.remove('warn');
+    }, 1600);
   }
 
   function run(btn) {
     if (!view || !btn) return;
     const op = { type: btn.dataset.op };
     if (op.type === 'color') op.color = btn.dataset.color;
+    // With nothing selected (pinned bar), format the word at the cursor. Section works on
+    // the cursor's line either way.
+    const sel = view.state.selection.main;
+    const wordAtCursor = sel.empty && op.type !== 'section';
+    if (wordAtCursor) {
+      const word = view.state.wordAt(sel.head);
+      if (!word) {
+        flashHint('Select some text first');
+        view.focus();
+        return;
+      }
+      view.dispatch({ selection: { anchor: word.from, head: word.to } });
+    }
     const spec = applyFormat(view.state, op);
     if (spec) view.dispatch(spec);
+    // Put the cursor back (at the end of the word) so typing and arrow keys carry on as before.
+    if (wordAtCursor) view.dispatch({ selection: { anchor: view.state.selection.main.to } });
     view.focus();
     schedule();
   }
@@ -143,19 +192,25 @@ export function createPopup() {
       schedule();
     }
   });
+  // A pinned popup closes when you click somewhere other than the editor or the popup.
+  window.addEventListener('mousedown', (e) => {
+    if (!pinnedTo || el.contains(e.target) || pinnedTo.contains(e.target) || view?.dom.contains(e.target)) return;
+    hide();
+  }, true);
   window.addEventListener('resize', schedule);
   window.addEventListener('scroll', schedule, true);
 
   const keys = Prec.highest(keymap.of([
-    { key: 'ArrowLeft', run: () => visible() && move(0, -1) },
-    { key: 'ArrowRight', run: () => visible() && move(0, 1) },
-    { key: 'ArrowUp', run: () => visible() && move(-1, 0) },
-    { key: 'ArrowDown', run: () => visible() && move(1, 0) },
+    { key: 'ArrowLeft', run: () => ownsKeys() && move(0, -1) },
+    { key: 'ArrowRight', run: () => ownsKeys() && move(0, 1) },
+    { key: 'ArrowUp', run: () => ownsKeys() && move(-1, 0) },
+    { key: 'ArrowDown', run: () => ownsKeys() && move(1, 0) },
     {
       key: 'Enter',
       run: () => {
-        if (!visible()) return false;
+        if (!ownsKeys()) return false;
         if (focus) run(rows[focus[0]][focus[1]]);
+        else if (pinnedTo) return false;
         else hide();
         return true;
       },
@@ -182,12 +237,29 @@ export function createPopup() {
         view = v;
         if (e.button === 0) {
           pointerDown = true;
-          hide();
+          if (!pinnedTo) hide();
         }
         return false;
       },
     }),
   ];
 
-  return { extension, hide };
+  return {
+    extension,
+    hide,
+    attach(v) {
+      view = v;
+    },
+    // Opens the popup under a menu bar button, or closes it if it's already open there.
+    toggle(button) {
+      if (pinnedTo === button) return hide();
+      if (!view || view.state.readOnly) return;
+      hide();
+      pinnedTo = button;
+      button.classList.add('active');
+      el.classList.add('pinned');
+      view.focus();
+      update();
+    },
+  };
 }
