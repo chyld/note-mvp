@@ -32,6 +32,7 @@ const state = {
   savedText: '',
   saveState: 'clean', // clean | dirty | saving | error
   mode: localStorage.getItem('margin:mode') === 'raw' ? 'raw' : 'render',
+  font: localStorage.getItem('margin:font') === 'prop' ? 'prop' : 'mono',
 };
 
 // ---------- API ----------
@@ -151,6 +152,21 @@ function setMode(mode) {
   const toggle = $('mode-toggle');
   toggle.dataset.mode = mode;
   toggle.title = mode === 'render' ? 'Render mode · click for raw (Ctrl+E)' : 'Raw mode · click for render (Ctrl+E)';
+  setFont(state.font);
+}
+
+// Render mode can use a monospace or proportional font; raw mode is always monospace.
+function setFont(font) {
+  state.font = font;
+  localStorage.setItem('margin:font', font);
+  $('editor').classList.toggle('font-prop', font === 'prop');
+  const toggle = $('font-toggle');
+  toggle.dataset.font = font;
+  toggle.disabled = state.mode === 'raw';
+  toggle.title = state.mode === 'raw'
+    ? 'Raw mode always uses the monospace font'
+    : font === 'mono' ? 'Monospace font · click for proportional' : 'Proportional font · click for monospace';
+  editor.view.requestMeasure();
 }
 
 // ---------- Notes ----------
@@ -519,6 +535,7 @@ $('home').addEventListener('click', (e) => {
 $('sb-expand').addEventListener('click', () => setSidebar(false));
 
 $('mode-toggle').addEventListener('click', () => setMode(state.mode === 'render' ? 'raw' : 'render'));
+$('font-toggle').addEventListener('click', () => setFont(state.font === 'mono' ? 'prop' : 'mono'));
 
 const formatBtn = $('format-btn');
 formatBtn.addEventListener('mousedown', (e) => e.preventDefault()); // keep the editor's selection

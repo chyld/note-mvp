@@ -83,7 +83,9 @@ Logins last 30 days and are renewed while you use Margin. **Log out** ends a ses
   warns you before unsaved changes would be lost. If a note is open in two tabs, the last save
   wins.
 - **Render / Raw**: Render mode (eye) shows the formatting; Raw mode (code) shows the syntax.
-  You can edit in both. Click the toggle or press **Ctrl+E** to switch.
+  You can edit in both. Click the toggle or press **Ctrl+E** to switch. The **Aa / Aa** toggle
+  next to it switches render mode between a monospace and a proportional font (code always
+  stays monospace, and raw mode is always monospace). Your choice is remembered.
 - **Formatting**: select text and a popup appears: **B**, **U**, **</>** (code),
   **Section**, **Clear formatting**, **Remove color**, and 24 highlight colors. Click an
   option, or use the arrow keys and **Enter**. **Esc** closes the popup. The palette button in

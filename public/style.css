@@ -1,6 +1,7 @@
 :root {
   --ui-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono-font: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --prose-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --bg: #f6f4fd;
   --ink: #1f1b2e;
   --muted: #7b7591;
@@ -381,6 +382,29 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
 }
 .mode-switch:hover { background: #ebe6fb; }
 
+.fs-glyph {
+  position: relative;
+  z-index: 1;
+  width: 36px;
+  color: #8f87ad;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  transition: color 0.2s;
+}
+.fs-mono { font-family: var(--mono-font); letter-spacing: -0.04em; }
+.fs-prop { font-family: var(--prose-font); }
+.font-switch .ms-thumb { background: linear-gradient(135deg, #ffb347, #ff6f61); box-shadow: 0 3px 10px rgb(255 120 80 / 0.4); }
+.font-switch[data-font="mono"] .fs-mono,
+.font-switch[data-font="prop"] .fs-prop { color: #fff; }
+.font-switch[data-font="prop"] .ms-thumb {
+  transform: translateX(34px);
+  background: linear-gradient(135deg, #7cd590, #22c3b5);
+  box-shadow: 0 3px 10px rgb(40 180 150 / 0.4);
+}
+.font-switch:disabled { opacity: 0.4; cursor: default; }
+.font-switch:disabled:hover { background: #f1eefc; }
+
 .format-btn .palette-body { stroke: currentColor; }
 .format-btn.active { background: #f1ecff; color: var(--violet); box-shadow: inset 0 0 0 1.5px #c9bdfc; }
 
@@ -572,6 +596,13 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
 #editor .cm-line { padding: 0 2px; }
 #editor .cm-cursor { border-left-width: 2px; border-left-color: var(--violet); }
 #editor .cm-selectionBackground { background: #e6deff !important; }
+
+/* Proportional font (render mode only); code keeps the monospace font. */
+#editor.font-prop .mode-render.cm-editor { font-size: 15.5px; }
+#editor.font-prop .mode-render .cm-scroller { font-family: var(--prose-font); line-height: 1.65; }
+#editor.font-prop .mode-render .cm-code,
+#editor.font-prop .mode-render .cm-cb { font-family: var(--mono-font); font-size: 13.5px; }
+#editor.font-prop .mode-render .cm-title { letter-spacing: -0.02em; }
 
 /* Title */
 #editor .cm-title { font-size: 1.9em; font-weight: 800; line-height: 1.35; padding-bottom: 8px; letter-spacing: -0.01em; }
