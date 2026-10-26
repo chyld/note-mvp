@@ -84,8 +84,8 @@ Logins last 30 days and are renewed while you use Margin. **Log out** ends a ses
 - **Render / Raw**: Render mode shows the formatting; Raw mode shows the syntax. You can edit
   in both. **Ctrl+E** switches between them.
 - **Formatting**: select text and a popup appears: **B**, **U**, **</>** (code),
-  **Clear formatting**, **Remove color**, and 24 highlight colors. Click an option, or use the
-  arrow keys and **Enter**. **Esc** closes the popup.
+  **Section**, **Clear formatting**, **Remove color**, and 24 highlight colors. Click an
+  option, or use the arrow keys and **Enter**. **Esc** closes the popup.
 - **Tags**: add tags in the bar above the note (lowercase a-z and 0-9). Tags save immediately.
   The dropdown at the top of the sidebar filters notes by tag.
 - **Search**: the search box matches the text of your notes and works together with the tag
@@ -130,7 +130,8 @@ only applies when the syntax is exactly right, so a stray `==` stays plain text.
 
 **Sections** start at a `## {color} Heading` line and run to the next section heading or the
 end of the note. In render mode, click the ⌄ to collapse or expand one. Collapsed sections
-are remembered in your browser.
+are remembered in your browser. **Section** in the popup turns the selected line into a
+`## {blue-deep}` heading (edit the color in raw mode), or a heading back into a plain line.
 
 ## Development
 

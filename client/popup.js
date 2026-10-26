@@ -13,6 +13,7 @@ export function createPopup() {
       <button type="button" class="fp-btn fp-b" data-op="b" title="Bold"><b>B</b></button>
       <button type="button" class="fp-btn fp-u" data-op="u" title="Underline"><u>U</u></button>
       <button type="button" class="fp-btn fp-code" data-op="code" title="Code">&lt;/&gt;</button>
+      <button type="button" class="fp-btn fp-section" data-op="section" title="Make this line a section heading">Section</button>
       <button type="button" class="fp-btn fp-wide" data-op="clear">Clear formatting</button>
     </div>
     <div class="fp-row">
@@ -70,6 +71,7 @@ export function createPopup() {
     el.querySelector('.fp-b').classList.toggle('active', fs.b);
     el.querySelector('.fp-u').classList.toggle('active', fs.u);
     el.querySelector('.fp-code').classList.toggle('active', fs.code);
+    el.querySelector('.fp-section').classList.toggle('active', fs.section);
     el.classList.toggle('in-code', fs.inCodeBlock);
     for (const sw of el.querySelectorAll('.fp-swatch')) sw.classList.toggle('active', sw.dataset.color === fs.color);
 

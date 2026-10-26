@@ -422,7 +422,7 @@ button, input, select { font: inherit; color: inherit; }
 .format-popup {
   position: fixed;
   z-index: 50;
-  width: 352px;
+  width: 384px;
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: 10px;

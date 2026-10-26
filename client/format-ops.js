@@ -68,12 +68,20 @@ function selectedLines(parsed, from, to) {
   return parsed.lines.filter((l) => l.to >= from && l.from <= to && !(l.from === to && to > from && l.from > from));
 }
 
+// The line the Section button acts on: the first selected heading or non-empty text line.
+function sectionTarget(lines) {
+  return lines.find((l) => l.kind === 'heading' || (l.kind === 'text' && l.text.trim())) || null;
+}
+
 // Current formatting of the selection, for the popup's active states.
 export function formatState(state) {
   const sel = state.selection.main;
   const parsed = parseDoc(state.doc.toString());
   const lines = selectedLines(parsed, sel.from, sel.to);
-  const result = { any: false, b: true, u: true, code: true, color: undefined, inCodeBlock: false };
+  const result = {
+    any: false, b: true, u: true, code: true, color: undefined, inCodeBlock: false,
+    section: sectionTarget(lines)?.kind === 'heading',
+  };
   for (const line of lines) {
     if (line.block) result.inCodeBlock = true;
     const region = inlineRegion(line);
@@ -95,10 +103,12 @@ export function formatState(state) {
 
 // Applies an inline change to every selected character. `op` is one of:
 // { type: 'b' }, { type: 'u' }, { type: 'color', color }, { type: 'removeColor' }, { type: 'clear' }
+// Code and Section work on whole lines and have their own functions.
 export function applyFormat(state, op) {
   const sel = state.selection.main;
   if (sel.empty) return null;
   if (op.type === 'code') return toggleCode(state);
+  if (op.type === 'section') return toggleSection(state);
   const now = formatState(state);
   const parsed = parseDoc(state.doc.toString());
 
@@ -145,6 +155,31 @@ export function applyFormat(state, op) {
     annotations: bypass.of(true),
     userEvent: 'format',
     scrollIntoView: true,
+  };
+}
+
+export const DEFAULT_SECTION_COLOR = 'blue-deep';
+
+// Turns the selected line into a section heading, or a heading back into a plain line.
+function toggleSection(state) {
+  const sel = state.selection.main;
+  const parsed = parseDoc(state.doc.toString());
+  const line = sectionTarget(selectedLines(parsed, sel.from, sel.to));
+  if (!line) return null;
+  let changes;
+  if (line.kind === 'heading') {
+    changes = { from: line.from, to: line.from + line.prefixLen };
+  } else {
+    // A heading's text has to start with a non-space character.
+    const indent = /^\s*/.exec(line.text)[0].length;
+    changes = { from: line.from, to: line.from + indent, insert: `## {${DEFAULT_SECTION_COLOR}} ` };
+  }
+  const cs = state.changes(changes);
+  return {
+    changes: cs,
+    selection: EditorSelection.single(cs.mapPos(sel.anchor, 1), cs.mapPos(sel.head, 1)),
+    annotations: bypass.of(true),
+    userEvent: 'format',
   };
 }
 
