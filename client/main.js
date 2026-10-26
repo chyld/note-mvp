@@ -206,6 +206,7 @@ async function openNote(id, { focus = false } = {}) {
 }
 
 function showNote(note) {
+  setDrawer(false);
   state.note = note;
   state.savedText = note.text;
   state.saveState = 'clean';
@@ -225,6 +226,7 @@ function showNote(note) {
 }
 
 function closeNote() {
+  setDrawer(true); // on phones, show the note list
   state.note = null;
   state.savedText = '';
   editor.load({ id: '', text: '' });
@@ -510,11 +512,27 @@ function goHome() {
   refreshTags();
 }
 
+// On wide screens the sidebar can be collapsed (remembered); on phones it's a drawer that
+// slides over the note.
+const narrow = matchMedia('(max-width: 760px)');
+const isNarrow = () => narrow.matches;
+
 function setSidebar(collapsed) {
-  els.app.classList.toggle('sidebar-collapsed', collapsed);
-  $('sb-expand').hidden = !collapsed;
   localStorage.setItem('margin:sidebar', collapsed ? 'collapsed' : 'open');
+  updateSidebarLayout();
 }
+
+function setDrawer(open) {
+  els.app.classList.toggle('drawer-open', open && isNarrow());
+}
+
+function updateSidebarLayout() {
+  const collapsed = !isNarrow() && localStorage.getItem('margin:sidebar') === 'collapsed';
+  els.app.classList.toggle('sidebar-collapsed', collapsed);
+  $('sb-expand').hidden = !(collapsed || isNarrow());
+  if (!isNarrow()) setDrawer(false);
+}
+narrow.addEventListener('change', updateSidebarLayout);
 
 // ---------- Events ----------
 
@@ -525,14 +543,15 @@ $('trash-note').addEventListener('click', trashNote);
 $('restore-note').addEventListener('click', restoreNote);
 $('delete-note').addEventListener('click', deleteForever);
 $('empty-trash').addEventListener('click', emptyTrash);
-$('sb-collapse').addEventListener('click', () => setSidebar(true));
+$('sb-collapse').addEventListener('click', () => (isNarrow() ? setDrawer(false) : setSidebar(true)));
+$('backdrop').addEventListener('click', () => setDrawer(false));
 $('home').addEventListener('click', (e) => {
   // Let modified clicks (new tab, new window) through as a normal link.
   if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
   e.preventDefault();
   goHome();
 });
-$('sb-expand').addEventListener('click', () => setSidebar(false));
+$('sb-expand').addEventListener('click', () => (isNarrow() ? setDrawer(true) : setSidebar(false)));
 
 $('mode-toggle').addEventListener('click', () => setMode(state.mode === 'render' ? 'raw' : 'render'));
 $('font-toggle').addEventListener('click', () => setFont(state.font === 'mono' ? 'prop' : 'mono'));
@@ -637,7 +656,7 @@ window.addEventListener('beforeunload', (e) => {
 
 async function start() {
   setMode(state.mode);
-  setSidebar(localStorage.getItem('margin:sidebar') === 'collapsed');
+  updateSidebarLayout();
   const params = new URLSearchParams(location.search);
   state.filterTag = params.get('tag') || '';
   try {
@@ -651,7 +670,10 @@ async function start() {
   await Promise.all([refreshTags(), refreshList()]);
   const id = params.get('note');
   if (id) await openNote(id);
-  else updateUrl();
+  else {
+    setDrawer(true);
+    updateUrl();
+  }
 }
 
 start();

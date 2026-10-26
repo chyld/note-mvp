@@ -34,6 +34,7 @@ export function createEditor(opts) {
     EditorView.contentAttributes.of({ spellcheck: 'true', autocorrect: 'off', autocapitalize: 'off' }),
     EditorView.updateListener.of((u) => {
       if (u.docChanged) opts.onChange(u.state.doc.toString());
+      if (u.selectionSet || u.docChanged || u.focusChanged || u.geometryChanged) scheduleLinkChip();
       const before = u.startState.field(collapsedField);
       const after = u.state.field(collapsedField);
       if (before !== after) opts.onCollapsedChange([...after]);
@@ -98,19 +99,64 @@ export function createEditor(opts) {
     return true;
   }
 
+  // The link (or bare URL) token at a document position, if any. Links in code don't count.
+  function linkAt(state, pos) {
+    const line = state.doc.lineAt(pos);
+    if (parseDoc(state.doc.toString()).lines[line.number - 1].block) return null;
+    return parseInline(line.text, line.from)
+      .find((t) => (t.type === 'link' || t.type === 'url') && t.from <= pos && pos <= t.to) || null;
+  }
+
+  const openUrl = (url) => window.open(url, '_blank', 'noopener,noreferrer');
+
   // Ctrl+click (Cmd+click on Mac) opens a link in a new tab, in either mode.
   function openLinkOnModClick(e, v) {
     if (e.button !== 0 || !(e.ctrlKey || e.metaKey)) return false;
     const pos = v.posAtCoords({ x: e.clientX, y: e.clientY });
-    if (pos == null) return false;
-    const line = v.state.doc.lineAt(pos);
-    if (parseDoc(v.state.doc.toString()).lines[line.number - 1].block) return false;
-    const link = parseInline(line.text, line.from)
-      .find((t) => (t.type === 'link' || t.type === 'url') && t.from <= pos && pos <= t.to);
+    const link = pos == null ? null : linkAt(v.state, pos);
     if (!link) return false;
     e.preventDefault();
-    window.open(link.url, '_blank', 'noopener,noreferrer');
+    openUrl(link.url);
     return true;
+  }
+
+  // Touch screens have no Ctrl+click: with the cursor in a link, a chip above it opens the link.
+  const coarse = matchMedia('(pointer: coarse)');
+  const chip = document.createElement('button');
+  chip.type = 'button';
+  chip.className = 'link-chip';
+  chip.hidden = true;
+  chip.innerHTML = '<svg><use href="#i-external"/></svg><span></span>';
+  document.body.appendChild(chip);
+  let chipUrl = null;
+  let chipRaf = 0;
+  chip.addEventListener('mousedown', (e) => e.preventDefault());
+  chip.addEventListener('click', () => chipUrl && openUrl(chipUrl));
+  window.addEventListener('scroll', () => scheduleLinkChip(), true);
+
+  function scheduleLinkChip() {
+    cancelAnimationFrame(chipRaf);
+    chipRaf = requestAnimationFrame(updateLinkChip);
+  }
+
+  function updateLinkChip() {
+    const { state } = view;
+    const sel = state.selection.main;
+    const link = coarse.matches && view.hasFocus && sel.empty ? linkAt(state, sel.head) : null;
+    const at = link && view.coordsAtPos(sel.head);
+    if (!at) {
+      chip.hidden = true;
+      chipUrl = null;
+      return;
+    }
+    chipUrl = link.url;
+    chip.querySelector('span').textContent = link.url.replace(/^https?:\/\//, '');
+    chip.hidden = false;
+    const w = chip.offsetWidth;
+    const h = chip.offsetHeight;
+    const top = at.top - h - 10 < 8 ? at.bottom + 10 : at.top - h - 10;
+    chip.style.top = `${top}px`;
+    chip.style.left = `${Math.max(8, Math.min(at.left - w / 2, window.innerWidth - w - 8))}px`;
   }
 
   // Links show a pointer while Ctrl/Cmd is held.

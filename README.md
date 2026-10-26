@@ -109,6 +109,12 @@ Logins last 30 days and are renewed while you use Margin. **Log out** ends a ses
   `http://<host>:5555/?note=k3x9q2mf` for a note or `http://<host>:5555/?tag=work` for a tag.
   If you're logged out you'll log in first; a note or tag that doesn't exist gives a 404.
 
+### On a phone
+
+Margin works on phones and tablets. The note list slides out from the left (tap ☰), the
+formatting options sit at the bottom of the screen above the keyboard, and since there's no
+Ctrl+click on a touch screen, putting the cursor in a link shows a button that opens it.
+
 ## Formatting syntax
 
 | Write | Shows as |

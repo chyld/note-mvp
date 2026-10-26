@@ -83,9 +83,23 @@ export function createPopup() {
   }
 
   function place(top, left) {
+    el.classList.remove('docked');
+    el.style.bottom = 'auto';
     const w = el.offsetWidth;
     el.style.top = `${top}px`;
     el.style.left = `${Math.max(8, Math.min(left, window.innerWidth - w - 8))}px`;
+  }
+
+  // On phones and touch screens the popup sits at the bottom of the screen, clear of the
+  // system's selection handles and menu, and above the on-screen keyboard.
+  const dockQuery = matchMedia('(max-width: 760px), (pointer: coarse)');
+  function placeDocked() {
+    const vv = window.visualViewport;
+    const keyboard = vv ? Math.max(0, window.innerHeight - vv.offsetTop - vv.height) : 0;
+    el.classList.add('docked');
+    el.style.top = 'auto';
+    el.style.left = '8px';
+    el.style.bottom = `calc(${Math.round(keyboard) + 8}px + env(safe-area-inset-bottom))`;
   }
 
   function update() {
@@ -97,6 +111,7 @@ export function createPopup() {
       paintState(state);
       el.hidden = false;
       paintFocus();
+      if (dockQuery.matches) return placeDocked();
       const r = pinnedTo.getBoundingClientRect();
       place(r.bottom + 8, r.left);
       return;
@@ -112,6 +127,7 @@ export function createPopup() {
     el.hidden = false;
     if (wasHidden) focus = null;
     paintFocus();
+    if (dockQuery.matches) return placeDocked();
     const h = el.offsetHeight;
     const gap = 8;
     let top = end.bottom + gap;
@@ -222,6 +238,8 @@ export function createPopup() {
   }, true);
   window.addEventListener('resize', schedule);
   window.addEventListener('scroll', schedule, true);
+  window.visualViewport?.addEventListener('resize', schedule);
+  window.visualViewport?.addEventListener('scroll', schedule);
 
   const keys = Prec.highest(keymap.of([
     { key: 'ArrowLeft', run: () => ownsKeys() && move(0, -1) },
