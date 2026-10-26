@@ -1,5 +1,5 @@
 import { createEditor } from './editor.js';
-import { HUES } from '../shared/format.js';
+import { HUES, noteTitle } from '../shared/format.js';
 import { darkShade } from './colors.js';
 
 const $ = (id) => document.getElementById(id);
@@ -238,7 +238,9 @@ async function newNote() {
 async function trashNote() {
   const note = state.note;
   if (!note) return;
-  if (isDirty() && !confirm('Move this note to the trash? Your unsaved changes will be lost.')) return;
+  const title = noteTitle(state.savedText) || 'Untitled';
+  const warning = isDirty() ? '\n\nYour unsaved changes will be lost.' : '';
+  if (!confirm(`Move "${title}" to the trash?${warning}`)) return;
   try {
     await api('POST', `/api/notes/${note.id}/trash`);
     state.savedText = editor.text();
