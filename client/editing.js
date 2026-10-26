@@ -33,7 +33,7 @@ const protectMarkers = EditorState.changeFilter.of((tr) => {
   return flat;
 });
 
-// After a deletion, drop highlights and inline code left with nothing inside.
+// After a deletion, drop highlights, inline code and links left with nothing inside.
 const cleanupEmpty = EditorState.transactionFilter.of((tr) => {
   if (!tr.docChanged || !isUserEdit(tr) || !tr.startState.field(renderField, false)) return tr;
   let removed = false;
@@ -49,7 +49,7 @@ const cleanupEmpty = EditorState.transactionFilter.of((tr) => {
       seen.add(n);
       const line = lines[n - 1];
       if (line.block) continue;
-      for (const m of line.text.matchAll(/==\{([a-z0-9+-]+)\}==|(?<!`)``(?!`)/g)) {
+      for (const m of line.text.matchAll(/==\{([a-z0-9+-]+)\}==|(?<!`)``(?!`)|(?<!!)\[\]\(https?:\/\/[^\s)]*\)/g)) {
         if (m[1] !== undefined && !parseOptions(m[1])) continue;
         changes.push({ from: line.from + m.index, to: line.from + m.index + m[0].length });
       }
@@ -203,9 +203,13 @@ function renderEnter(view) {
       else if (p === t.contentFrom && p > t.from) { p = t.from; moved = true; }
     }
   }
-  const open = onLine.filter((t) => t.contentFrom < p && p < t.contentTo).sort((a, b) => a.from - b.from);
-  const closeStr = open.slice().reverse().map((t) => (t.type === 'hl' ? '==' : '`')).join('');
-  const openStr = open.map((t) => (t.type === 'hl' ? `=={${t.optsText}}` : '`')).join('');
+  const open = onLine
+    .filter((t) => t.type !== 'url' && t.contentFrom < p && p < t.contentTo)
+    .sort((a, b) => a.from - b.from);
+  const closer = { hl: () => '==', code: () => '`', link: (t) => `](${t.url})` };
+  const opener = { hl: (t) => `=={${t.optsText}}`, code: () => '`', link: () => '[' };
+  const closeStr = open.slice().reverse().map((t) => closer[t.type](t)).join('');
+  const openStr = open.map((t) => opener[t.type](t)).join('');
   const insert = closeStr + '\n' + openStr;
   view.dispatch({
     changes: { from: p, insert },

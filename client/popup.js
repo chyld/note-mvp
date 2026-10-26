@@ -2,7 +2,7 @@
 // formatting button, where it stays open ("pinned") while you edit.
 import { Prec } from '@codemirror/state';
 import { keymap, EditorView } from '@codemirror/view';
-import { HUES, COLORS } from '../shared/format.js';
+import { HUES, COLORS, URL_RE } from '../shared/format.js';
 import { applyFormat, formatState } from './format-ops.js';
 
 export function createPopup() {
@@ -18,6 +18,7 @@ export function createPopup() {
       <button type="button" class="fp-btn fp-wide" data-op="clear">Clear formatting</button>
     </div>
     <div class="fp-row">
+      <button type="button" class="fp-btn fp-link" data-op="link" title="Link to a web page"><svg><use href="#i-link"/></svg> Link</button>
       <button type="button" class="fp-btn fp-wide" data-op="removeColor">Remove color</button>
     </div>
     <div class="fp-grid">
@@ -76,6 +77,7 @@ export function createPopup() {
     el.querySelector('.fp-u').classList.toggle('active', fs.u);
     el.querySelector('.fp-code').classList.toggle('active', fs.code);
     el.querySelector('.fp-section').classList.toggle('active', fs.section);
+    el.querySelector('.fp-link').classList.toggle('active', Boolean(fs.link));
     el.classList.toggle('in-code', fs.inCodeBlock);
     for (const sw of el.querySelectorAll('.fp-swatch')) sw.classList.toggle('active', sw.dataset.color === fs.color);
   }
@@ -144,12 +146,33 @@ export function createPopup() {
       }
       view.dispatch({ selection: { anchor: word.from, head: word.to } });
     }
+    if (op.type === 'link') {
+      const current = formatState(view.state).link;
+      const answer = window.prompt(current ? 'Edit the link (leave empty to remove it):' : 'Link to:', current || 'https://');
+      const url = answer === null ? undefined : linkUrl(answer);
+      if (url === undefined) {
+        if (answer !== null) flashHint("That isn't a web address");
+        if (wordAtCursor) view.dispatch({ selection: { anchor: sel.head } });
+        view.focus();
+        schedule();
+        return;
+      }
+      op.url = url;
+    }
     const spec = applyFormat(view.state, op);
     if (spec) view.dispatch(spec);
     // Put the cursor back (at the end of the word) so typing and arrow keys carry on as before.
     if (wordAtCursor) view.dispatch({ selection: { anchor: view.state.selection.main.to } });
     view.focus();
     schedule();
+  }
+
+  // The URL typed into the Link prompt: null to remove the link, undefined if it isn't valid.
+  function linkUrl(input) {
+    let url = input.trim();
+    if (!url) return null;
+    if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+    return URL_RE.test(url) ? url : undefined;
   }
 
   function paintFocus() {

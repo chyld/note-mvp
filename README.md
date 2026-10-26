@@ -91,6 +91,10 @@ Logins last 30 days and are renewed while you use Margin. **Log out** ends a ses
   option, or use the arrow keys and **Enter**. **Esc** closes the popup. The palette button in
   the menu bar opens the same options as a bar that stays open while you edit; with nothing
   selected, it formats the word at the cursor.
+- **Links**: type or paste a web address, or select text and use **Link** in the formatting
+  popup (or paste a URL over the selected text). Links don't open on a plain click, so you can
+  edit them; **Ctrl+click** (**Cmd+click** on a Mac) opens one in a new tab. Hover to see where
+  a link goes.
 - **Tags**: add tags in the bar above the note (lowercase a-z and 0-9). As you type, your
   existing tags are suggested (each user has their own tags: the ones their notes use).
   **Enter** takes the highlighted suggestion; the arrow keys move between them. Tags save
@@ -115,6 +119,8 @@ Logins last 30 days and are renewed while you use Margin. **Log out** ends a ses
 | `=={u}duplicates==` | underlined |
 | `=={lime+b+u}yearbook==` | light lime, bold and underlined |
 | `` `inline code` `` | inline code |
+| `https://example.com` | a link (web addresses become links on their own) |
+| `[the docs](https://example.com/docs)` | a link that shows "the docs" |
 | `## {green-deep} Notes App` | a collapsible section heading |
 | `![](a7p2xq9d.png)` | a pasted screenshot |
 

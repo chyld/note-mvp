@@ -147,6 +147,13 @@ async function copyText(text) {
 
 const hide = Decoration.replace({});
 
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+export const OPEN_LINK_HINT = isMac ? 'Cmd+click to open' : 'Ctrl+click to open';
+const linkMark = (url) => Decoration.mark({
+  class: 'cm-link',
+  attributes: { title: `${url}\n${OPEN_LINK_HINT}` },
+});
+
 function buildRender(state) {
   const parsed = parseDoc(state.doc.toString());
   const { lines, sections } = parsed;
@@ -172,10 +179,16 @@ function buildRender(state) {
   const inline = (text, offset, inHeading = false) => {
     for (const t of parseInline(text, offset)) {
       tokens.push(t);
+      if (t.type === 'url') {
+        decos.push(linkMark(t.url).range(t.from, t.to));
+        continue;
+      }
       markers.push({ from: t.from, to: t.to, ranges: [[t.from, t.contentFrom], [t.contentTo, t.to]] });
       hideRange(t.from, t.contentFrom, 'marker');
       hideRange(t.contentTo, t.to, 'marker');
-      if (t.type === 'hl') {
+      if (t.type === 'link') {
+        decos.push(linkMark(t.url).range(t.contentFrom, t.contentTo));
+      } else if (t.type === 'hl') {
         const color = inHeading ? null : t.opts.color;
         const cls = ['cm-hl'];
         if (color) cls.push('cm-hl-color');

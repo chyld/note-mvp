@@ -1,5 +1,5 @@
 // Formatting commands for the selection popup. Each affected line is turned into a list of
-// visible characters with attributes, changed, and written back as ==…== / `…` syntax.
+// visible characters with attributes, changed, and written back as ==…== / `…` / […](…) syntax.
 import { EditorSelection } from '@codemirror/state';
 import { parseDoc, parseInline, serializeOptions, stripInline } from '../shared/format.js';
 import { bypass } from './render.js';
@@ -10,7 +10,9 @@ function lineModel(text, offset) {
   const marker = new Uint8Array(text.length);
   const hl = new Array(text.length).fill(null);
   const code = new Uint8Array(text.length);
+  const link = new Array(text.length).fill(null);
   for (const t of parseInline(text, offset)) {
+    if (t.type === 'url') continue; // a bare URL is just text
     const a = t.from - offset;
     const ca = t.contentFrom - offset;
     const cb = t.contentTo - offset;
@@ -19,12 +21,13 @@ function lineModel(text, offset) {
     for (let i = cb; i < b; i++) marker[i] = 1;
     for (let i = ca; i < cb; i++) {
       if (t.type === 'hl') hl[i] = t.opts;
+      else if (t.type === 'link') link[i] = t.url;
       else code[i] = 1;
     }
   }
   const chars = [];
   for (let i = 0; i < text.length; i++) {
-    if (!marker[i]) chars.push({ ch: text[i], pos: offset + i, opts: hl[i] || noOpts, code: Boolean(code[i]) });
+    if (!marker[i]) chars.push({ ch: text[i], pos: offset + i, opts: hl[i] || noOpts, code: Boolean(code[i]), link: link[i] });
   }
   return chars;
 }
@@ -38,17 +41,19 @@ function serialize(chars) {
     let j = i;
     while (j < chars.length && serializeOptions(chars[j].opts) === key) j++;
     if (key) out += `=={${key}}`;
+    // Inside a highlight: links, then code. Link text is plain, so code inside a link is dropped.
     let k = i;
     while (k < j) {
-      const isCode = chars[k].code;
+      const url = chars[k].link;
+      const isCode = !url && chars[k].code;
       let m = k;
-      while (m < j && chars[m].code === isCode) m++;
-      if (isCode) out += '`';
+      while (m < j && chars[m].link === url && (url || chars[m].code === isCode)) m++;
+      out += url ? '[' : isCode ? '`' : '';
       for (let x = k; x < m; x++) {
         pos[x] = out.length;
         out += chars[x].ch;
       }
-      if (isCode) out += '`';
+      out += url ? `](${url})` : isCode ? '`' : '';
       k = m;
     }
     if (key) out += '==';
@@ -79,7 +84,7 @@ export function formatState(state) {
   const parsed = parseDoc(state.doc.toString());
   const lines = selectedLines(parsed, sel.from, sel.to);
   const result = {
-    any: false, b: true, u: true, code: true, color: undefined, inCodeBlock: false,
+    any: false, b: true, u: true, code: true, color: undefined, link: undefined, inCodeBlock: false,
     section: sectionTarget(lines)?.kind === 'heading',
   };
   for (const line of lines) {
@@ -96,15 +101,18 @@ export function formatState(state) {
       const color = line.kind === 'heading' ? line.color : c.opts.color;
       if (result.color === undefined) result.color = color;
       else if (result.color !== color) result.color = null;
+      if (result.link === undefined) result.link = c.link;
+      else if (result.link !== c.link) result.link = null;
     }
   }
-  if (!result.any) Object.assign(result, { b: false, u: false, code: result.inCodeBlock, color: null });
+  if (!result.any) Object.assign(result, { b: false, u: false, code: result.inCodeBlock, color: null, link: null });
   if (result.inCodeBlock) result.code = true;
   return result;
 }
 
 // Applies an inline change to every selected character. `op` is one of:
-// { type: 'b' }, { type: 'u' }, { type: 'color', color }, { type: 'removeColor' }, { type: 'clear' }
+// { type: 'b' }, { type: 'u' }, { type: 'color', color }, { type: 'removeColor' }, { type: 'clear' },
+// { type: 'link', url } (url null removes the link)
 // Code and Section work on whole lines and have their own functions. A color picked on a
 // section heading recolors the section (heading and bar) instead of highlighting its text.
 export function applyFormat(state, op) {
@@ -123,6 +131,7 @@ export function applyFormat(state, op) {
       case 'color': o.color = now.color === op.color ? null : op.color; break;
       case 'removeColor': o.color = null; break;
       case 'clear': return { ...c, opts: noOpts, code: false };
+      case 'link': return { ...c, link: op.url, code: op.url ? false : c.code };
     }
     return { ...c, opts: o };
   };

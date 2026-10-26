@@ -49,41 +49,70 @@ export function serializeOptions({ color, b, u }) {
 }
 
 // Finds an inline code span starting at text[i] === '`'. Returns end index (exclusive) or -1.
-function codeSpanEnd(text, i) {
+function codeSpanEnd(text, i, end = text.length) {
   const j = text.indexOf('`', i + 1);
-  return j > i + 1 ? j + 1 : -1;
+  return j > i + 1 && j < end ? j + 1 : -1;
 }
 
-// Parses inline tokens on one line. Positions are offset by `offset`.
-// Tokens: { type: 'hl', from, to, contentFrom, contentTo, opts, optsText }
-//         { type: 'code', from, to, contentFrom, contentTo, inHl }
-export function parseInline(text, offset = 0) {
-  const tokens = [];
-  let i = 0;
-  while (i < text.length) {
-    if (text[i] === '`') {
-      const end = codeSpanEnd(text, i);
-      if (end > 0) {
-        tokens.push({ type: 'code', from: offset + i, to: offset + end, contentFrom: offset + i + 1, contentTo: offset + end - 1 });
-        i = end;
+export const URL_RE = /^https?:\/\/[^\s<>()[\]`]+$/;
+const LINK_RE = /^\[([^\]\n]+)\]\((https?:\/\/[^\s<>()[\]`]+)\)/;
+
+// [text](https://…) starting at text[i] === '['. Returns { end, textEnd, url } or null.
+function matchLink(text, i, end) {
+  const m = LINK_RE.exec(text.slice(i, end));
+  return m ? { end: i + m[0].length, textEnd: i + 1 + m[1].length, url: m[2] } : null;
+}
+
+// A bare https://… URL starting at i. Trailing punctuation isn't part of it. Returns end or -1.
+function bareUrlEnd(text, i, end) {
+  if (i > 0 && /[\w/]/.test(text[i - 1])) return -1;
+  const m = /^https?:\/\/[^\s<>()[\]`]+/.exec(text.slice(i, end));
+  if (!m) return -1;
+  let url = m[0];
+  while (/[.,;:!?'"*_~=]$/.test(url)) url = url.slice(0, -1);
+  return /^https?:\/\/./.test(url) ? i + url.length : -1;
+}
+
+// Code spans, links and bare URLs in text[i, end), plus highlights when allowHl.
+function scan(text, i, end, offset, tokens, allowHl) {
+  while (i < end) {
+    const ch = text[i];
+    if (ch === '`') {
+      const e = codeSpanEnd(text, i, end);
+      if (e > 0) {
+        tokens.push({ type: 'code', from: offset + i, to: offset + e, contentFrom: offset + i + 1, contentTo: offset + e - 1, inHl: !allowHl });
+        i = e;
         continue;
       }
-    } else if (text.startsWith('=={', i)) {
+    } else if (ch === '[') {
+      const l = matchLink(text, i, end);
+      if (l) {
+        tokens.push({ type: 'link', from: offset + i, to: offset + l.end, contentFrom: offset + i + 1, contentTo: offset + l.textEnd, url: l.url });
+        i = l.end;
+        continue;
+      }
+    } else if (ch === 'h') {
+      const e = bareUrlEnd(text, i, end);
+      if (e > 0) {
+        tokens.push({ type: 'url', from: offset + i, to: offset + e, contentFrom: offset + i, contentTo: offset + e, url: text.slice(i, e) });
+        i = e;
+        continue;
+      }
+    } else if (allowHl && text.startsWith('=={', i)) {
       const m = /^==\{([a-z0-9+-]+)\}/.exec(text.slice(i, i + 64));
       const opts = m && parseOptions(m[1]);
       if (opts) {
         const contentStart = i + m[0].length;
-        const inner = [];
+        // The closing == is the first one outside inline code and links.
         let k = contentStart;
         let close = -1;
-        while (k < text.length) {
+        while (k < end) {
           if (text[k] === '`') {
-            const end = codeSpanEnd(text, k);
-            if (end > 0) {
-              inner.push({ type: 'code', from: offset + k, to: offset + end, contentFrom: offset + k + 1, contentTo: offset + end - 1, inHl: true });
-              k = end;
-              continue;
-            }
+            const e = codeSpanEnd(text, k, end);
+            if (e > 0) { k = e; continue; }
+          } else if (text[k] === '[') {
+            const l = matchLink(text, k, end);
+            if (l) { k = l.end; continue; }
           }
           if (text.startsWith('==', k)) { close = k; break; }
           k++;
@@ -93,7 +122,7 @@ export function parseInline(text, offset = 0) {
             type: 'hl', from: offset + i, to: offset + close + 2,
             contentFrom: offset + contentStart, contentTo: offset + close, opts, optsText: m[1],
           });
-          tokens.push(...inner);
+          scan(text, contentStart, close, offset, tokens, false);
           i = close + 2;
           continue;
         }
@@ -101,6 +130,18 @@ export function parseInline(text, offset = 0) {
     }
     i++;
   }
+}
+
+// Parses inline tokens on one line. Positions are offset by `offset`. Every token has
+// from/to (whole syntax) and contentFrom/contentTo (the visible part):
+//   { type: 'hl', opts, optsText }   =={opts}text==
+//   { type: 'code', inHl }           `code`
+//   { type: 'link', url }            [text](url)
+//   { type: 'url', url }             a bare https://… URL (no hidden syntax)
+// Code, links and URLs can sit inside a highlight; nothing is parsed inside them.
+export function parseInline(text, offset = 0) {
+  const tokens = [];
+  scan(text, 0, text.length, offset, tokens, true);
   return tokens;
 }
 

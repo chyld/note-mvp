@@ -604,6 +604,16 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
 #editor .cm-hl-b { font-weight: 700; }
 #editor .cm-hl-u { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
 
+/* Links */
+#editor .cm-link {
+  color: #4b3fe0;
+  text-decoration: underline;
+  text-decoration-color: rgb(75 63 224 / 0.35);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+#editor.links-armed .cm-link { cursor: pointer; text-decoration-color: currentColor; }
+
 /* Inline code */
 #editor .cm-code {
   background: var(--code-bg);
@@ -749,6 +759,8 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
 .fp-btn:hover { background: #f4f1ff; border-color: #d9d0fb; }
 .fp-btn.active { border-color: transparent; background: var(--violet); color: #fff; box-shadow: 0 3px 10px rgb(124 92 255 / 0.28); }
 .fp-code { font-family: var(--mono-font); font-size: 12px; }
+.fp-link { display: inline-flex; align-items: center; gap: 5px; }
+.fp-link svg { width: 15px; height: 15px; }
 .fp-wide { flex: 1; }
 .fp-grid {
   display: grid;

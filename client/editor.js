@@ -4,6 +4,8 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { renderField, eofField, collapsedField, noteIdFacet, bypass } from './render.js';
 import { renderEditing, codeTabs } from './editing.js';
 import { createPopup } from './popup.js';
+import { applyFormat } from './format-ops.js';
+import { parseDoc, parseInline, URL_RE } from '../shared/format.js';
 
 const modeComp = new Compartment();
 const editableComp = new Compartment();
@@ -38,6 +40,7 @@ export function createEditor(opts) {
     }),
     EditorView.domEventHandlers({
       paste: (e, view) => handlePaste(e, view),
+      mousedown: (e, view) => openLinkOnModClick(e, view),
       mousemove: (e, view) => showCopyButton(e, view),
       mouseleave: (e, view) => showCopyButton(null, view),
     }),
@@ -53,7 +56,7 @@ export function createEditor(opts) {
 
   function handlePaste(e, v) {
     const files = [...(e.clipboardData?.items || [])].filter((i) => i.kind === 'file').map((i) => i.getAsFile()).filter(Boolean);
-    if (!files.length) return false;
+    if (!files.length) return pasteLinkOverSelection(e, v);
     e.preventDefault();
     if (readOnly) return true;
     const file = files[0];
@@ -81,6 +84,40 @@ export function createEditor(opts) {
     }).catch((err) => opts.onError(err.message || 'Upload failed'));
     return true;
   }
+
+  // Pasting a URL while text is selected turns the text into a link to it.
+  function pasteLinkOverSelection(e, v) {
+    const url = e.clipboardData?.getData('text/plain').trim();
+    const sel = v.state.selection.main;
+    if (readOnly || !url || !URL_RE.test(url) || sel.empty) return false;
+    if (v.state.doc.lineAt(sel.from).number !== v.state.doc.lineAt(sel.to).number) return false;
+    const spec = applyFormat(v.state, { type: 'link', url });
+    if (!spec) return false;
+    e.preventDefault();
+    v.dispatch(spec);
+    return true;
+  }
+
+  // Ctrl+click (Cmd+click on Mac) opens a link in a new tab, in either mode.
+  function openLinkOnModClick(e, v) {
+    if (e.button !== 0 || !(e.ctrlKey || e.metaKey)) return false;
+    const pos = v.posAtCoords({ x: e.clientX, y: e.clientY });
+    if (pos == null) return false;
+    const line = v.state.doc.lineAt(pos);
+    if (parseDoc(v.state.doc.toString()).lines[line.number - 1].block) return false;
+    const link = parseInline(line.text, line.from)
+      .find((t) => (t.type === 'link' || t.type === 'url') && t.from <= pos && pos <= t.to);
+    if (!link) return false;
+    e.preventDefault();
+    window.open(link.url, '_blank', 'noopener,noreferrer');
+    return true;
+  }
+
+  // Links show a pointer while Ctrl/Cmd is held.
+  const armLinks = (e) => opts.parent.classList.toggle('links-armed', e.ctrlKey || e.metaKey);
+  window.addEventListener('keydown', armLinks);
+  window.addEventListener('keyup', armLinks);
+  window.addEventListener('blur', () => opts.parent.classList.remove('links-armed'));
 
   // Code blocks show their Copy button while hovered.
   let hoverBlock = null;
