@@ -95,10 +95,15 @@ button, input, select { font: inherit; color: inherit; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  flex: 1;
+  margin-right: auto;
+  padding: 2px 4px;
+  border-radius: 6px;
+  color: inherit;
   font-weight: 650;
   font-size: 15px;
+  text-decoration: none;
 }
+.brand:hover { background: #eceef1; }
 .brand img { width: 18px; height: 18px; }
 
 .sb-filters {

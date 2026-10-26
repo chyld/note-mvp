@@ -387,6 +387,18 @@ function setTrashView(on) {
   els.trashToggle.textContent = on ? '← Back to notes' : 'Trash';
 }
 
+// Home: all notes, nothing open, no filters.
+function goHome() {
+  if (!confirmDiscard()) return;
+  if (state.trashView) setTrashView(false);
+  state.filterTag = '';
+  state.query = '';
+  els.search.value = '';
+  closeNote();
+  refreshList();
+  refreshTags();
+}
+
 function setSidebar(collapsed) {
   els.app.classList.toggle('sidebar-collapsed', collapsed);
   $('sb-expand').hidden = !collapsed;
@@ -403,6 +415,12 @@ $('restore-note').addEventListener('click', restoreNote);
 $('delete-note').addEventListener('click', deleteForever);
 $('empty-trash').addEventListener('click', emptyTrash);
 $('sb-collapse').addEventListener('click', () => setSidebar(true));
+$('home').addEventListener('click', (e) => {
+  // Let modified clicks (new tab, new window) through as a normal link.
+  if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  goHome();
+});
 $('sb-expand').addEventListener('click', () => setSidebar(false));
 
 for (const b of document.querySelectorAll('.mode-toggle button')) {
